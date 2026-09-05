@@ -81,10 +81,10 @@ returns invisibly)
 ## Status
 
 Early skeleton. Line folding/unfolding, whitespace cleanup, and property
-name casing work and are tested. Not yet handled: parameter values that
-contain `:` or `;` inside quotes, and preserving the original case of
-`X-` prefixed experimental property names where that matters to a
-downstream consumer.
+and parameter name casing work and are tested, including parameter values
+that are quoted and contain a `:` or `;` of their own. Not yet handled:
+preserving the original case of `X-` prefixed experimental property names
+where that matters to a downstream consumer.
 
 ## License
 

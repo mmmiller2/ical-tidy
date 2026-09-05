@@ -83,16 +83,71 @@ func FoldLine(line string, limit int) string {
 	return out.String()
 }
 
-// NormalizePropertyName uppercases the property (and parameter block) name
-// at the start of a content line, i.e. everything before the first ':' or
-// ';', and leaves the rest of the line untouched. Property and parameter
-// names are case-insensitive per RFC 5545, but calendar files in the wild
-// mix cases inconsistently, which makes them annoying to diff and grep.
-// If the line has no ':' or ';', or starts with one, it is returned as-is.
+// NormalizePropertyName uppercases the property name and every parameter
+// name on a content line, leaving parameter values and the property value
+// untouched. Property and parameter names are case-insensitive per RFC
+// 5545, but calendar files in the wild mix cases inconsistently, which
+// makes them annoying to diff and grep.
+//
+// A quoted parameter value (the only kind allowed to contain ':', ';', or
+// ',') is tracked so its contents are never mistaken for a delimiter, e.g.
+// the embedded ':' in `DELEGATED-TO="mailto:jane@example.com"` does not end
+// the parameter list early. If the line has no ':' or ';', or starts with
+// one, it is returned as-is.
 func NormalizePropertyName(line string) string {
-	idx := strings.IndexAny(line, ":;")
-	if idx <= 0 {
+	nameEnd := firstTopLevelByte(line, ":;")
+	if nameEnd <= 0 {
 		return line
 	}
-	return strings.ToUpper(line[:idx]) + line[idx:]
+
+	var out strings.Builder
+	out.WriteString(strings.ToUpper(line[:nameEnd]))
+	rest := line[nameEnd:]
+
+	for len(rest) > 0 && rest[0] == ';' {
+		out.WriteByte(';')
+		rest = rest[1:]
+
+		paramEnd := firstTopLevelByte(rest, "=:;")
+		if paramEnd < 0 {
+			out.WriteString(rest)
+			return out.String()
+		}
+		out.WriteString(strings.ToUpper(rest[:paramEnd]))
+		if rest[paramEnd] != '=' {
+			rest = rest[paramEnd:]
+			continue
+		}
+		out.WriteByte('=')
+		rest = rest[paramEnd+1:]
+
+		valueEnd := firstTopLevelByte(rest, ";:")
+		if valueEnd < 0 {
+			out.WriteString(rest)
+			return out.String()
+		}
+		out.WriteString(rest[:valueEnd])
+		rest = rest[valueEnd:]
+	}
+	out.WriteString(rest)
+	return out.String()
+}
+
+// firstTopLevelByte returns the index of the first byte in s that also
+// appears in chars and falls outside a double-quoted span, or -1 if there
+// is none. Quotes cannot nest or escape in RFC 5545 parameter values, so a
+// plain toggle on '"' is enough to track them.
+func firstTopLevelByte(s string, chars string) int {
+	inQuotes := false
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		if c == '"' {
+			inQuotes = !inQuotes
+			continue
+		}
+		if !inQuotes && strings.IndexByte(chars, c) >= 0 {
+			return i
+		}
+	}
+	return -1
 }

@@ -73,6 +73,9 @@ func TestNormalizePropertyName(t *testing.T) {
 		"BEGIN:VEVENT":                 "BEGIN:VEVENT",
 		":no name":                     ":no name",
 		"no-delimiter":                 "no-delimiter",
+		"dtstart;tzid=America/NY:2026": "DTSTART;TZID=America/NY:2026",
+		`attendee;cn="Doe, John";delegated-to="mailto:jane@example.com":mailto:john@example.com`: `ATTENDEE;CN="Doe, John";DELEGATED-TO="mailto:jane@example.com":mailto:john@example.com`,
+		`x-prop;param="a;b":value`: `X-PROP;PARAM="a;b":value`,
 	}
 	for input, want := range cases {
 		if got := NormalizePropertyName(input); got != want {
