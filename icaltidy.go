@@ -89,6 +89,11 @@ func FoldLine(line string, limit int) string {
 // 5545, but calendar files in the wild mix cases inconsistently, which
 // makes them annoying to diff and grep.
 //
+// The exception is an "X-" prefixed experimental property name (e.g.
+// X-WR-CALNAME), which is left exactly as written. Vendors sometimes rely
+// on the exact casing of these to identify their own extensions, and RFC
+// 5545 does not require normalizing them.
+//
 // A quoted parameter value (the only kind allowed to contain ':', ';', or
 // ',') is tracked so its contents are never mistaken for a delimiter, e.g.
 // the embedded ':' in `DELEGATED-TO="mailto:jane@example.com"` does not end
@@ -100,8 +105,13 @@ func NormalizePropertyName(line string) string {
 		return line
 	}
 
+	name := line[:nameEnd]
 	var out strings.Builder
-	out.WriteString(strings.ToUpper(line[:nameEnd]))
+	if isExperimentalName(name) {
+		out.WriteString(name)
+	} else {
+		out.WriteString(strings.ToUpper(name))
+	}
 	rest := line[nameEnd:]
 
 	for len(rest) > 0 && rest[0] == ';' {
@@ -131,6 +141,13 @@ func NormalizePropertyName(line string) string {
 	}
 	out.WriteString(rest)
 	return out.String()
+}
+
+// isExperimentalName reports whether name is an RFC 5545 "X-" experimental
+// property name, checked case-insensitively since the prefix itself is
+// still case-insensitive even though the rest of the name is preserved.
+func isExperimentalName(name string) bool {
+	return len(name) >= 2 && (name[0] == 'X' || name[0] == 'x') && name[1] == '-'
 }
 
 // firstTopLevelByte returns the index of the first byte in s that also
