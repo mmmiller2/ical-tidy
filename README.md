@@ -51,6 +51,13 @@ icaltidy.UnfoldLines("SUMMARY:one\r\n two")          // []string{"SUMMARY:onetwo
 go run ./cmd/icaltidy < messy.ics > clean.ics
 ```
 
+Pass `-fold-width` to fold at a width other than the RFC 5545 recommended 75
+octets, e.g. for a client that expects a narrower fold:
+
+```sh
+go run ./cmd/icaltidy -fold-width 60 < messy.ics > clean.ics
+```
+
 ## Example
 
 Input:
@@ -82,9 +89,10 @@ returns invisibly)
 
 Early skeleton. Line folding/unfolding, whitespace cleanup, and property
 and parameter name casing work and are tested, including parameter values
-that are quoted and contain a `:` or `;` of their own. Not yet handled:
-preserving the original case of `X-` prefixed experimental property names
-where that matters to a downstream consumer.
+that are quoted and contain a `:` or `;` of their own, and preserving the
+original case of `X-` prefixed experimental property names. The CLI fold
+width is configurable; the library defaults to the RFC 5545 recommended 75
+octets everywhere else.
 
 ## License
 

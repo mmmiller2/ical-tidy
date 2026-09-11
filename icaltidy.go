@@ -18,6 +18,12 @@ const maxOctets = 75
 // folded to the RFC 5545 recommended width. It does not validate that the
 // input is a well-formed calendar; it only tidies the text.
 func Format(input string) string {
+	return FormatWidth(input, maxOctets)
+}
+
+// FormatWidth behaves like Format but folds lines at width octets instead of
+// the RFC 5545 recommended 75. See FoldLine for how width is interpreted.
+func FormatWidth(input string, width int) string {
 	var out strings.Builder
 	for _, line := range UnfoldLines(input) {
 		line = strings.TrimRight(line, " \t")
@@ -25,7 +31,7 @@ func Format(input string) string {
 			continue
 		}
 		line = NormalizePropertyName(line)
-		out.WriteString(FoldLine(line, maxOctets))
+		out.WriteString(FoldLine(line, width))
 		out.WriteString("\r\n")
 	}
 	return out.String()

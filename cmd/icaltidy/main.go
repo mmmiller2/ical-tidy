@@ -3,6 +3,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io"
 	"os"
@@ -11,13 +12,16 @@ import (
 )
 
 func main() {
+	width := flag.Int("fold-width", 75, "fold content lines at this many octets (RFC 5545 recommends 75)")
+	flag.Parse()
+
 	input, err := io.ReadAll(os.Stdin)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "icaltidy: reading stdin:", err)
 		os.Exit(1)
 	}
 
-	if _, err := os.Stdout.WriteString(icaltidy.Format(string(input))); err != nil {
+	if _, err := os.Stdout.WriteString(icaltidy.FormatWidth(string(input), *width)); err != nil {
 		fmt.Fprintln(os.Stderr, "icaltidy: writing stdout:", err)
 		os.Exit(1)
 	}

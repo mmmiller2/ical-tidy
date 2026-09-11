@@ -126,6 +126,31 @@ func TestFormat(t *testing.T) {
 	}
 }
 
+func TestFormatWidth(t *testing.T) {
+	messy := "begin:vevent\nsummary:" + repeat("x", 100) + "\nend:vevent"
+
+	got := FormatWidth(messy, 40)
+	for _, part := range splitCRLF(got) {
+		if part == "" {
+			continue
+		}
+		if len(part) > 40 {
+			t.Errorf("output line exceeds 40 octets: %q", part)
+		}
+	}
+
+	unfolded := UnfoldLines(got)
+	want := []string{"BEGIN:VEVENT", "SUMMARY:" + repeat("x", 100), "END:VEVENT"}
+	if len(unfolded) != len(want) {
+		t.Fatalf("got %d lines, want %d: %v", len(unfolded), len(want), unfolded)
+	}
+	for i := range want {
+		if unfolded[i] != want[i] {
+			t.Errorf("line %d: got %q, want %q", i, unfolded[i], want[i])
+		}
+	}
+}
+
 func repeat(s string, n int) string {
 	out := make([]byte, 0, n*len(s))
 	for i := 0; i < n; i++ {
