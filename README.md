@@ -58,6 +58,13 @@ octets, e.g. for a client that expects a narrower fold:
 go run ./cmd/icaltidy -fold-width 60 < messy.ics > clean.ics
 ```
 
+Pass `-check-uids` to also report any UID that is used by more than one
+VEVENT. The report goes to stderr, the tidied calendar is still written to
+stdout, and the exit status is 2 if a duplicate was found. An override of one
+occurrence of a recurring event (same UID, with a `RECURRENCE-ID`) is not
+counted as a duplicate. The same check is available to library users as
+`icaltidy.FindDuplicateUIDs`.
+
 ## Example
 
 Input:
